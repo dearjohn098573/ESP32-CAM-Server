@@ -11,7 +11,7 @@ import java.net.URL
 class Server {
 
     init {
-        downloadFile("192.168.137.240")
+        downloadFile("192.168.137.185")
     }
 
     //  视频连接
@@ -145,11 +145,11 @@ class Server {
         private val path5 = "src/res/5.jpeg"
 
         fun saveImage(bytes: ByteArray) {
-            if (count++ == 1) bytesToImageFile(bytes, path01); addWatermark(path01, path1)
-            if (count++ == 2) bytesToImageFile(bytes, path02); addWatermark(path02, path2)
-            if (count++ == 3) bytesToImageFile(bytes, path03); addWatermark(path03, path3)
-            if (count++ == 4) bytesToImageFile(bytes, path04); addWatermark(path04, path4)
-            if (count++ == 5) bytesToImageFile(bytes, path05); addWatermark(path05, path5)
+            if (count++ == 1) bytesToImageFile(bytes, path01); //addWatermark(path01, path1)
+            if (count++ == 2) bytesToImageFile(bytes, path02); //addWatermark(path02, path2)
+            if (count++ == 3) bytesToImageFile(bytes, path03); //addWatermark(path03, path3)
+            if (count++ == 4) bytesToImageFile(bytes, path04); //addWatermark(path04, path4)
+            if (count++ == 5) bytesToImageFile(bytes, path05); //addWatermark(path05, path5)
             /**
              * 此处要对图片进行旋转
              */

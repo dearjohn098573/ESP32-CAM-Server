@@ -86,10 +86,10 @@ object Repository {
     /**
      * 将字节数组转化为图片并存储
      * @param bytes 表示图片的字节数组
-     * @param path 保存路径 默认为 "src/res/0A.jpeg"
+     * @param path 保存路径 默认为 "src/res/01.jpeg"
      * @author Tongda
      */
-    fun bytesToImageFile(bytes: ByteArray, path: String = "src/res/0A.jpeg") {
+    fun bytesToImageFile(bytes: ByteArray, path: String = "src/res/01.jpeg") {
         try {
             val fos = FileOutputStream(File(path))
             fos.write(bytes, 0, bytes.size)
