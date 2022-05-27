@@ -1,7 +1,7 @@
 package main
 
-import main.logic.Repository.addWatermark
-import main.logic.Repository.bytesToImageFile
+import main.logic.Repository.storeImage
+import main.logic.Repository.clear
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
@@ -11,11 +11,13 @@ import java.net.URL
 class Server {
 
     init {
-        downloadFile("192.168.137.185")
+        downloadFile("192.168.137.15")
     }
 
     //  视频连接
     private fun downloadFile(ip: String) {
+
+        Thread{ clear() }.start()
 
         val downloadUrl = "http://$ip:80/stream"
 
@@ -100,7 +102,8 @@ class Server {
                                  */
                                 //addWatermark()
 
-                                SaveImage().saveImage(buffer)
+                                //SaveImage().saveImage(buffer)
+                                storeImage(buffer)
 
                                 numberOfImages++
 
@@ -113,7 +116,7 @@ class Server {
                         reConnect = 0
                         Thread.sleep(1000)
                     }
-                } catch (e: SocketTimeoutException) { println("Waring: 连接超时: " + e.message) }
+                } catch (e: SocketTimeoutException) { println("Warning: 连接超时: " + e.message) }
                 if (++reConnect == 11) break
                 Thread.sleep(5000)
             }
@@ -127,32 +130,6 @@ class Server {
                 outputStream?.close()
             } catch (e: IOException) { println("Warning: 流关闭失败: " + e.message) }
             println("Info: 流程结束")
-        }
-    }
-
-    private inner class SaveImage {
-
-        private var count = 1
-        private val path01 = "src/res/01.jpeg"
-        private val path02 = "src/res/02.jpeg"
-        private val path03 = "src/res/03.jpeg"
-        private val path04 = "src/res/04.jpeg"
-        private val path05 = "src/res/05.jpeg"
-        private val path1 = "src/res/1.jpeg"
-        private val path2 = "src/res/2.jpeg"
-        private val path3 = "src/res/3.jpeg"
-        private val path4 = "src/res/4.jpeg"
-        private val path5 = "src/res/5.jpeg"
-
-        fun saveImage(bytes: ByteArray) {
-            if (count++ == 1) bytesToImageFile(bytes, path01); //addWatermark(path01, path1)
-            if (count++ == 2) bytesToImageFile(bytes, path02); //addWatermark(path02, path2)
-            if (count++ == 3) bytesToImageFile(bytes, path03); //addWatermark(path03, path3)
-            if (count++ == 4) bytesToImageFile(bytes, path04); //addWatermark(path04, path4)
-            if (count++ == 5) bytesToImageFile(bytes, path05); //addWatermark(path05, path5)
-            /**
-             * 此处要对图片进行旋转
-             */
         }
     }
 

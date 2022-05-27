@@ -13,6 +13,56 @@ import javax.imageio.ImageIO
 object Repository {
 
     /**
+     * 存储图片并直接以时间命名(每秒三张)
+     * @param buffer ByteArray格式的图片
+     * @author Tongda
+     */
+    fun storeImage(buffer: ByteArray) {
+        val ft = SimpleDateFormat ("MM-dd-HH-mm-ss")
+        val time = ft.format(Date())
+        if (!File("src/res/$time-1.jpeg").exists())
+            bytesToImageFile(buffer, "src/res/$time-1.jpeg")
+        else if (!File("src/res/$time-2.jpeg").exists())
+            bytesToImageFile(buffer, "src/res/$time-2.jpeg")
+        else if (!File("src/res/$time-3.jpeg").exists())
+            bytesToImageFile(buffer, "src/res/$time-3.jpeg")
+    }
+
+    /**
+     * 清除过时图片线程
+     */
+    fun clear() {
+        while (true ){
+            val ft = SimpleDateFormat ("MM-dd-HH-mm-ss")
+            val time = ft.format(Date())
+            val minute = time.substring(9, 11).toInt()
+            val second = time.substring(12, 14).toInt()
+
+            val fileNames: MutableList<String> = mutableListOf()
+            //在该目录下走一圈，得到文件目录树结构
+            val fileTree: FileTreeWalk = File("src/res/").walk()
+            fileTree.maxDepth(1) //需遍历的目录层级为1，即无需检查子目录
+                .filter { it.isFile } //只挑选文件，不处理文件夹
+                .filter { it.extension in listOf("jpeg") } //选择扩展名为png和jpg的图片文件
+                .forEach { fileNames.add(it.name) } //循环处理符合条件的文件
+            for (i in fileNames) {
+                if (i.substring(9, 11).toInt() == minute) {
+                    if (second - i.substring(12, 14).toInt() >= 5) {
+                        File("src/res/$i").delete()
+                        //println("$i 删除成功")
+                    }
+                } else {
+                    if (60 - i.substring(12, 14).toInt() + second >= 5) {
+                        File("src/res/$i").delete()
+                        //println("$i 删除成功")
+                    }
+                }
+            }
+            Thread.sleep(5000)
+        }
+    }
+
+    /**
      * 计算两个时间的时间差 (相差几秒几毫秒)
      * @param one 开始时间
      * @param two 结束时间
@@ -89,7 +139,7 @@ object Repository {
      * @param path 保存路径 默认为 "src/res/01.jpeg"
      * @author Tongda
      */
-    fun bytesToImageFile(bytes: ByteArray, path: String = "src/res/01.jpeg") {
+    private fun bytesToImageFile(bytes: ByteArray, path: String = "src/res/01.jpeg") {
         try {
             val fos = FileOutputStream(File(path))
             fos.write(bytes, 0, bytes.size)
