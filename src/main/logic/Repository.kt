@@ -14,60 +14,102 @@ import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.imageio.ImageIO
+import kotlin.collections.HashMap
 
 object Repository {
 
     private const val appId = "JAZFE81wXFg3z9KgbzPdr1k1Y2WvbbNxscSfdapQa9WP"
     private const val sdkKey = "5LV6DeGkdkMapbX7viKF9BkEtggm3KjNZiuJhk8DjyHm"
+    private var imageNames = MutableList(1){""}
 
     /**
      * 存储图片并直接以时间命名(每秒三张)
      * @param buffer ByteArray格式的图片
+     * @return 成功存入的返回存储路径 未能成功存储的返回空值
      * @author Tongda
      */
-    fun storeImage(buffer: ByteArray) {
+    fun storeImage(buffer: ByteArray): String {
+        var resultPath = ""
         val ft = SimpleDateFormat ("MM-dd-HH-mm-ss")
         val time = ft.format(Date())
-        if (!File("src/res/$time-1.jpeg").exists())
+
+        var sss = ""
+        for (i in imageNames) sss+="$i; "
+        println("文件目录: $sss")
+
+        if (imageNames.size >= 30) clear()
+
+        if ( !(time.substring(6, 14) + "-1").isInList(imageNames) ) {
             bytesToImageFile(buffer, "src/res/$time-1.jpeg")
-        else if (!File("src/res/$time-2.jpeg").exists())
+            resultPath = "src/res/$time-1.jpeg"
+            imageNames.add(time.substring(6, 14) + "-1")
+        } else if ( !(time.substring(6, 14) + "-2").isInList(imageNames) ) {
             bytesToImageFile(buffer, "src/res/$time-2.jpeg")
-        else if (!File("src/res/$time-3.jpeg").exists())
+            resultPath = "src/res/$time-2.jpeg"
+            imageNames.add(time.substring(6, 14) + "-2")
+        } else if ( !(time.substring(6, 14) + "-3").isInList(imageNames) ) {
             bytesToImageFile(buffer, "src/res/$time-3.jpeg")
+            resultPath = "src/res/$time-3.jpeg"
+            imageNames.add(time.substring(6, 14) + "-3")
+        }
+        return resultPath
     }
 
     /**
-     * 清除过时图片线程
+     * 判定字符串是否存在于列中
+     * @param list 目标列
+     * @return 已存在则返回1, 否则返回0
+     */
+    private fun String.isInList(list: List<String>): Boolean {
+        var result = false
+        for (i in list) {
+            if (this == i) result = true
+        }
+        return result
+    }
+
+    /**
+     * 清除一次过时图片
      */
     fun clear() {
-        while (true ){
-            val ft = SimpleDateFormat ("MM-dd-HH-mm-ss")
-            val time = ft.format(Date())
-            val minute = time.substring(9, 11).toInt()
-            val second = time.substring(12, 14).toInt()
+        println("清理一次资源库")
+        val ft = SimpleDateFormat ("MM-dd-HH-mm-ss")
+        val time = ft.format(Date())
+        val minute = time.substring(9, 11).toInt()
+        val second = time.substring(12, 14).toInt()
 
-            val fileNames: MutableList<String> = mutableListOf()
-            //在该目录下走一圈，得到文件目录树结构
-            val fileTree: FileTreeWalk = File("src/res/").walk()
-            fileTree.maxDepth(1) //需遍历的目录层级为1，即无需检查子目录
-                .filter { it.isFile } //只挑选文件，不处理文件夹
-                .filter { it.extension in listOf("jpeg") } //选择扩展名为png和jpg的图片文件
-                .forEach { fileNames.add(it.name) } //循环处理符合条件的文件
-            for (i in fileNames) {
-                if (i.substring(9, 11).toInt() == minute) {
-                    if (second - i.substring(12, 14).toInt() >= 5) {
-                        File("src/res/$i").delete()
-                        //println("$i 删除成功")
-                    }
-                } else {
-                    if (60 - i.substring(12, 14).toInt() + second >= 5) {
-                        File("src/res/$i").delete()
-                        //println("$i 删除成功")
-                    }
+        val fileNames = getFileNames()
+
+        for (i in fileNames) {
+            if (i.substring(9, 11).toInt() == minute) {
+                if (second - i.substring(12, 14).toInt() >= 5) {
+                    File("src/res/$i").delete()
+                    //println("$i 删除成功")
+                    imageNames.remove(i.substring(6, 16))
+                }
+            } else {
+                if (60 - i.substring(12, 14).toInt() + second >= 5) {
+                    File("src/res/$i").delete()
+                    //println("$i 删除成功")
+                    imageNames.remove(i.substring(6, 16))
                 }
             }
-            Thread.sleep(5000)
         }
+    }
+
+    /**
+     * 遍历目录得到文件目录树结构
+     * @return 所有子文件的名字
+     */
+    private fun getFileNames(): MutableList<String> {
+        val fileNames: MutableList<String> = mutableListOf()
+        //在该目录下走一圈，得到文件目录树结构
+        val fileTree: FileTreeWalk = File("src/res/").walk()
+        fileTree.maxDepth(1) //需遍历的目录层级为1，即无需检查子目录
+            .filter { it.isFile } //只挑选文件，不处理文件夹
+            .filter { it.extension in listOf("jpeg") } //选择扩展名为jpeg的图片文件
+            .forEach { fileNames.add(it.name) } //循环处理符合条件的文件
+        return fileNames
     }
 
     /**
@@ -157,7 +199,6 @@ object Repository {
             e.printStackTrace()
         }
     }
-
 
     /**
      * 初始化脸部引擎
@@ -300,7 +341,7 @@ object Repository {
                 val faceSimilar = FaceSimilar()
                 faceEngine.compareFaceFeature(targetFaceFeature, sourceFaceFeature, faceSimilar)
 
-                println("与${name}的相似度: " + faceSimilar.score)
+                //println("与${name}的相似度: " + faceSimilar.score)
 
                 if (faceSimilar.score > threshold) resultArray[j] = name
             }
@@ -311,10 +352,18 @@ object Repository {
     }
 
     /**
+     * 卸载脸部引擎: 释放资源
+     * @param faceEngine 脸部引擎
+     */
+    fun uninstallEngine(faceEngine: FaceEngine) {
+        faceEngine.unInit()
+    }
+
+    /**
      * @param list 字符串数组
      * @return faceFeatureData: byte[1032] 即字节数组形式的脸部特征值
      */
-    fun stringListToByteArray(list: List<String>): ByteArray {
+    private fun stringListToByteArray(list: List<String>): ByteArray {
         val resultArray = ByteArray(1032)
         for (i in 0..1031) {
             resultArray[i] = list[i].toByte()

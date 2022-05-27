@@ -2,6 +2,10 @@ package main
 
 import main.logic.Repository.storeImage
 import main.logic.Repository.clear
+import main.logic.Repository.compare
+import main.logic.Repository.engineInitialization
+import main.logic.Repository.getMyFeatureData
+import main.logic.Repository.uninstallEngine
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
@@ -11,13 +15,15 @@ import java.net.URL
 class Server {
 
     init {
-        downloadFile("192.168.137.15")
+        downloadFile("192.168.137.68")
     }
 
     //  视频连接
     private fun downloadFile(ip: String) {
 
-        Thread{ clear() }.start()
+        val faceEngine = engineInitialization()
+
+        clear()
 
         val downloadUrl = "http://$ip:80/stream"
 
@@ -102,15 +108,35 @@ class Server {
                                  */
                                 //addWatermark()
 
-                                storeImage(buffer)
+                                val storePath = storeImage(buffer)
+                                if (storePath != "") {
+                                    numberOfImages++ // 成功存储的图片
+                                    println("存储结果: $storePath")
+                                    if (!File(storePath).exists()) println("存储失败！出问题了")
+                                    else {
+                                        println("开始人脸识别")
+                                        val targetFaceFeatureData = getMyFeatureData(faceEngine, storePath)
+                                        val result = compare(faceEngine, targetFaceFeatureData, 0.78)
 
-                                numberOfImages++
+                                        var recognitionResult = ""
+                                        for (i in result) recognitionResult += "-$i"
+                                        if (recognitionResult != "") {
+                                            println("识别结果: $recognitionResult")
+                                            File(storePath).renameTo(File(storePath.substring(0, 24) + recognitionResult +".jpeg"))
+                                            File(storePath).delete()
+                                            println("已重命名为: ${storePath.substring(0, 24) + recognitionResult +".jpeg"}")
+                                        }
+                                    }
+                                }
 
                                 //println("已成功接收 $numberOfImages 张图像")
                             } catch (e: SocketTimeoutException) {
                                 println("Warning: 流读取超时: " + e.message + " 连接已断开！")
                                 break
                             }
+
+                            //  成功接收并存储30张图片后自动退出
+                            if (numberOfImages >= 30) break
                         }
                         reConnect = 0
                         Thread.sleep(1000)
@@ -125,6 +151,7 @@ class Server {
             e.printStackTrace()
         } finally {
             try {
+                uninstallEngine(faceEngine)
                 bufferedInputStream?.close()
                 outputStream?.close()
             } catch (e: IOException) { println("Warning: 流关闭失败: " + e.message) }

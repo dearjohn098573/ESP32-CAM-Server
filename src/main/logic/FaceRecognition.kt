@@ -9,7 +9,7 @@ import java.io.File
 
 class FaceRecognition {
 
-    private val face = "C:\\Users\\HongMoying\\Desktop\\111.jpeg"
+    private val face = "C:\\Users\\HongMoying\\Desktop\\000.jpeg"
     private val appId = "JAZFE81wXFg3z9KgbzPdr1k1Y2WvbbNxscSfdapQa9WP"
     private val sdkKey = "5LV6DeGkdkMapbX7viKF9BkEtggm3KjNZiuJhk8DjyHm"
 
@@ -19,7 +19,7 @@ class FaceRecognition {
 
         val faceEngine = engineInitialization()
 
-        //createWhiteLibrary(faceEngine)
+        createWhiteLibrary(faceEngine)
 
         val targetFaceFeatureData = getMyFeatureData(faceEngine, face)
         val result = compare(faceEngine, targetFaceFeatureData, 0.78)
