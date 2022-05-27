@@ -102,7 +102,6 @@ class Server {
                                  */
                                 //addWatermark()
 
-                                //SaveImage().saveImage(buffer)
                                 storeImage(buffer)
 
                                 numberOfImages++
